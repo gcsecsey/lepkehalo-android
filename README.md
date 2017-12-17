@@ -1,2 +1,2 @@
-# lepkehalo
-Könyvbeolvasó alkalmazás Moly-felhasználóknak
+# 🦋 Lepkeháló
+## Keress könyveket Moly.hu-n könnyen és gyorsan! 
