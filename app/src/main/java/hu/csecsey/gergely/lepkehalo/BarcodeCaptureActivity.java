@@ -115,6 +115,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         gestureDetector = new GestureDetector(this, new CaptureGestureListener());
         scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
 
+        //TODO remove this
         Snackbar.make(mGraphicOverlay, "Tap to capture. Pinch/Stretch to zoom",
                 Snackbar.LENGTH_LONG)
                 .show();
@@ -178,7 +179,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // is set to receive the barcode detection results, track the barcodes, and maintain
         // graphics for each barcode on screen.  The factory is used by the multi-processor to
         // create a separate tracker instance for each barcode.
-        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).build();
+        BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).setBarcodeFormats(Barcode.ISBN | Barcode.PRODUCT | Barcode.EAN_13).build();
         BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, this);
         barcodeDetector.setProcessor(
                 new MultiProcessor.Builder<>(barcodeFactory).build());

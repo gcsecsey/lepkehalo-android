@@ -5,10 +5,10 @@ package hu.csecsey.gergely.lepkehalo;
  */
 
 public class Book {
-    private String title;
-    private String author;
-    private String thumbnailUrl;
-    private String id;
+    String title;
+    String author;
+    String thumbnailUrl;
+    String id;
 
     public Book() {
     }

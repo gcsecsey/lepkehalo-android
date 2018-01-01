@@ -17,12 +17,12 @@
 package hu.csecsey.gergely.lepkehalo;
 
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -42,15 +42,14 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
-
-import utils.ObjectSerializer;
 
 /**
  * Main activity demonstrating how to pass extra parameters to an activity that
@@ -67,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView httpResponse;
 
     //list
-    private ArrayList<Book> bookList = new ArrayList<>();
+    private List<Book> bookList = new ArrayList<>();
     private ListView listView;
     private CustomListAdapter adapter;
 
@@ -75,6 +74,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
     private static final String API_KEY = "08b9582cd4212eb22d52e9ba4964bfae";
+    private static final String STORAGE_KEY = "lepkehalo.list.state";
+
+    //handle data storage
+    Gson gson = new Gson();
+    SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,12 +88,17 @@ public class MainActivity extends AppCompatActivity {
         statusMessage = (TextView) findViewById(R.id.status_message);
 
         //read preferences
-        SharedPreferences prefs = getSharedPreferences("lepkehalo", Context.MODE_PRIVATE);
-        Gson gson = new Gson();
-        String json = prefs.getString("bookList", "");
-        bookList = gson.fromJson(json, bookList.getClass());
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String json = prefs.getString(STORAGE_KEY, "[]");
+        Log.d(TAG, json);
+        //type token for the gson call
+        Type bookListType = new TypeToken<ArrayList<Book>>() {
+        }.getType();
+        bookList = gson.fromJson(json, bookListType);
 
-        if (bookList == null) {bookList = new ArrayList<>();}
+        if (bookList == null) {
+            bookList = new ArrayList<>();
+        }
         Log.d(TAG, bookList.toString());
 
         listView = (ListView) findViewById(R.id.history_list);
@@ -226,27 +235,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     protected void handleJSONResponse(JSONObject jObj) {
-        Book b = new Book();
+        String bookId ="";
         try {
-            b.setId(jObj.get("id").toString());
-            b.setThumbnailUrl(jObj.get("cover").toString());
-            b.setAuthor(jObj.get("author").toString());
-            b.setTitle(jObj.get("title").toString());
-            bookList.add(b);
+            bookId = jObj.get("id").toString();
+            int bookPos = inBooksList(bookId);
+            Book b = new Book();
+            if (bookPos == -1) {
+                b.setId(bookId);
+                b.setThumbnailUrl(jObj.get("cover").toString());
+                b.setAuthor(jObj.get("author").toString());
+                b.setTitle(jObj.get("title").toString());
+                bookList.add(0, b);
+            } else {
+               b = bookList.remove(bookPos);
+               bookList.add(0, b);
+            }
             adapter.notifyDataSetChanged();
         } catch (JSONException e) {
         }
 
-        //save the list to preference
-        SharedPreferences prefs = getSharedPreferences("lepkehalo", Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        Gson gson = new Gson();
+        //save the list to data storage
         String json = gson.toJson(bookList);
-        editor.putString("bookList",json);
-        editor.commit();
+        prefs.edit().putString(STORAGE_KEY, json).apply();
 
         //open chrome
-        startChromeTab("https://moly.hu/konyvek/" + b.getId());
+        startChromeTab("https://moly.hu/konyvek/" + bookId);
+    }
+
+    private int inBooksList(String id) {
+        if (bookList.isEmpty())
+            return -1;
+
+        for (int i = 0; i < bookList.size(); i++) {
+            if (bookList.get(i).getId().equals(id)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
 }
