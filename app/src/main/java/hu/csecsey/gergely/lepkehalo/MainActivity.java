@@ -26,12 +26,15 @@ import android.preference.PreferenceManager;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
-import android.widget.ListView;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -55,20 +58,15 @@ import java.util.List;
  * Main activity demonstrating how to pass extra parameters to an activity that
  * reads barcodes.
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements RecyclerItemTouchHelper.RecyclerItemTouchHelperListener {
 
     // use a compound button so either checkbox or switch widgets work.
-    private CompoundButton useFlash;
-    private TextView statusMessage;
-    private String barcodeValue;
-
-    //http request
-    private TextView httpResponse;
+    private TextView historyHeader;
 
     //list
+    private RecyclerView recyclerView;
+    private BookListAdapter mAdapter;
     private List<Book> bookList = new ArrayList<>();
-    private ListView listView;
-    private CustomListAdapter adapter;
 
     private String konyvID = "";
     private static final int RC_BARCODE_CAPTURE = 9001;
@@ -84,8 +82,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        statusMessage = (TextView) findViewById(R.id.status_message);
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        //TODO remove
+        historyHeader = (TextView) findViewById(R.id.history);
 
         //read preferences
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -94,16 +93,29 @@ public class MainActivity extends AppCompatActivity {
         //type token for the gson call
         Type bookListType = new TypeToken<ArrayList<Book>>() {
         }.getType();
+        //TODO valszeg adapter kell majd
         bookList = gson.fromJson(json, bookListType);
-
         if (bookList == null) {
             bookList = new ArrayList<>();
         }
         Log.d(TAG, bookList.toString());
 
-        listView = (ListView) findViewById(R.id.history_list);
-        adapter = new CustomListAdapter(this, bookList);
-        listView.setAdapter(adapter);
+
+        //TODO remélhetőleg jó helyen
+        mAdapter = new BookListAdapter(this, bookList,this);
+
+//        listView = (ListView) findViewById(R.id.history_list);
+//        adapter = new CustomListAdapter(this, bookList);
+//        listView.setAdapter(adapter);
+
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        recyclerView.setLayoutManager(mLayoutManager);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+        recyclerView.setAdapter(mAdapter);
+
+        ItemTouchHelper.SimpleCallback itemTouchHelperCallback = new RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this);
+        new ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(recyclerView);
     }
 
     @Override
@@ -159,15 +171,15 @@ public class MainActivity extends AppCompatActivity {
                 if (data != null) {
                     Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
                     //TODO remove
-                    statusMessage.setText(R.string.barcode_success);
+                    historyHeader.setText(R.string.barcode_success);
                     sendISBNrequest(barcode.displayValue);
                     Log.d(TAG, "Barcode read: " + barcode.displayValue);
                 } else {
-                    statusMessage.setText(R.string.barcode_failure);
+                    historyHeader.setText(R.string.barcode_failure);
                     Log.d(TAG, "No barcode captured, intent data is null");
                 }
             } else {
-                statusMessage.setText(String.format(getString(R.string.barcode_error),
+                historyHeader.setText(String.format(getString(R.string.barcode_error),
                         CommonStatusCodes.getStatusCodeString(resultCode)));
             }
         } else {
@@ -210,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
 
                 //TODO Not very elegant, change later
                 if (error.getMessage().contains("JSONException")) {
-                    Snackbar.make(statusMessage, getString(R.string.book_not_found),
+                    Snackbar.make(historyHeader, getString(R.string.book_not_found),
                             Snackbar.LENGTH_INDEFINITE)
                             .setAction(getString(R.string.dismiss), new View.OnClickListener() {
                                 @Override
@@ -219,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
                             })
                             .show();
                 } else {
-                    Snackbar.make(statusMessage, getString(R.string.network_error),
+                    Snackbar.make(historyHeader, getString(R.string.network_error),
                             Snackbar.LENGTH_INDEFINITE)
                             .setAction(getString(R.string.dismiss), new View.OnClickListener() {
                                 @Override
@@ -232,6 +244,43 @@ public class MainActivity extends AppCompatActivity {
         });
 
         HttpRequests.getInstance().addToRequestQueue(jsonObjReq, tag_json_obj);
+    }
+
+    /*
+    * Item is swiped callback
+    */
+    @Override
+    public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction, int position) {
+        if (viewHolder instanceof BookListAdapter.MyViewHolder) {
+            // get the removed item name to display it in snack bar
+            String title = bookList.get(viewHolder.getAdapterPosition()).getTitle();
+
+            // removed item data for Undo
+            final Book deletedItem = bookList.get(viewHolder.getAdapterPosition());
+            final int deletedIndex = viewHolder.getAdapterPosition();
+
+            // remove the item from recycler view
+            mAdapter.removeItem(viewHolder.getAdapterPosition());
+
+            // showing snack bar with Undo option
+            Snackbar.make(historyHeader, title + " törölve",
+                    Snackbar.LENGTH_LONG)
+                    .setAction(getString(R.string.undo), new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            mAdapter.restoreItem(deletedItem, deletedIndex);
+                        }
+                    })
+                    .show();
+        }
+    }
+
+    @Override
+    public void onTap(RecyclerView.ViewHolder viewHolder, int position) {
+        if (viewHolder instanceof BookListAdapter.MyViewHolder) {
+            String konyvID = bookList.get(viewHolder.getAdapterPosition()).getId();
+            startChromeTab("https://moly.hu/konyvek/" + konyvID);
+        }
     }
 
     protected void handleJSONResponse(JSONObject jObj) {
@@ -250,7 +299,7 @@ public class MainActivity extends AppCompatActivity {
                b = bookList.remove(bookPos);
                bookList.add(0, b);
             }
-            adapter.notifyDataSetChanged();
+            mAdapter.notifyDataSetChanged();
         } catch (JSONException e) {
         }
 
