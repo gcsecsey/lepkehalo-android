@@ -2,7 +2,10 @@ package hu.csecsey.gergely.lepkehalo;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -24,7 +27,7 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.MyView
     ImageLoader imageLoader = HttpRequests.getInstance().getImageLoader();
     RecyclerItemTouchHelper.RecyclerItemTouchHelperListener listener;
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnCreateContextMenuListener {
         public TextView author, title;
         public NetworkImageView thumbnail;
         public RelativeLayout viewBackground, viewForeground;
@@ -36,11 +39,33 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.MyView
             thumbnail = itemView.findViewById(R.id.thumbnail);
             viewBackground = itemView.findViewById(R.id.view_background);
             viewForeground = itemView.findViewById(R.id.view_foreground);
-
-            RecyclerView.ViewHolder hello = this;
-
-
         }
+
+        @Override
+        public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+            MenuItem Edit = menu.add(Menu.NONE, 1, 1, "Edit");
+            MenuItem Delete = menu.add(Menu.NONE, 2, 2, "Delete");
+            Edit.setOnMenuItemClickListener(onEditMenu);
+            Delete.setOnMenuItemClickListener(onEditMenu);
+        }
+
+        private final MenuItem.OnMenuItemClickListener onEditMenu = new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+
+                switch (item.getItemId()) {
+                    case 1:
+                        //Do stuff
+                        break;
+
+                    case 2:
+                        //Do stuff
+
+                        break;
+                }
+                return true;
+            }
+        };
     }
 
     public BookListAdapter(Context context, List<Book> bookList, RecyclerItemTouchHelper.RecyclerItemTouchHelperListener listener) {

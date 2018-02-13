@@ -72,7 +72,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
     private static final int RC_BARCODE_CAPTURE = 9001;
     private static final String TAG = "BarcodeMain";
     private static final String API_KEY = "08b9582cd4212eb22d52e9ba4964bfae";
+    private static final String GOODREADS_API_KEY = "6DBazBtY6UeibUvmdVA";
+
     private static final String STORAGE_KEY = "lepkehalo.list.state";
+
+    public enum Sites {
+        MOLY, GOODREADS, AMAZON, BOOKDEPO
+    }
 
     //handle data storage
     Gson gson = new Gson();
@@ -187,9 +193,22 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         }
     }
 
-    protected void startChromeTab(String url) {
+    protected void startChromeTab(String url, final Sites s) {
         CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
-        builder.setToolbarColor(Color.parseColor("#2f5f8f"));
+        switch (s) {
+            case MOLY:
+                builder.setToolbarColor(Color.parseColor("#2f5f8f"));
+                break;
+            case AMAZON:
+            case BOOKDEPO:
+                builder.setToolbarColor(Color.parseColor("#403042"));
+                break;
+            case GOODREADS:
+                builder.setToolbarColor(Color.parseColor("#F4F1EA"));
+                break;
+        }
+
+
         CustomTabsIntent customTabsIntent = builder.build();
         customTabsIntent.launchUrl(this, Uri.parse(url));
     }
@@ -279,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
     public void onTap(RecyclerView.ViewHolder viewHolder, int position) {
         if (viewHolder instanceof BookListAdapter.MyViewHolder) {
             String konyvID = bookList.get(viewHolder.getAdapterPosition()).getId();
-            startChromeTab("https://moly.hu/konyvek/" + konyvID);
+            startChromeTab("https://moly.hu/konyvek/" + konyvID, Sites.MOLY);
         }
     }
 
@@ -308,7 +327,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         prefs.edit().putString(STORAGE_KEY, json).apply();
 
         //open chrome
-        startChromeTab("https://moly.hu/konyvek/" + bookId);
+        startChromeTab("https://moly.hu/konyvek/" + bookId, Sites.MOLY);
     }
 
     private int inBooksList(String id) {
