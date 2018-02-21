@@ -42,6 +42,7 @@
             android:name=".BarcodeCaptureActivity"
             android:label="@string/read_barcode"
             android:theme="@style/AppTheme.NoTitleBar"
+            android:screenOrientation="portrait"
             />
 
     </application>

@@ -18,4 +18,5 @@
 
 
     <color name="delete_background">#fa315b</color>
+    <color name="black">#000000</color>
 </resources>

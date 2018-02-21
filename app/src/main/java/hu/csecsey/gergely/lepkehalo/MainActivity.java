@@ -93,15 +93,12 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         //type token for the gson call
         Type bookListType = new TypeToken<ArrayList<Book>>() {
         }.getType();
-        //TODO valszeg adapter kell majd
         bookList = gson.fromJson(json, bookListType);
         if (bookList == null) {
             bookList = new ArrayList<>();
         }
         Log.d(TAG, bookList.toString());
 
-
-        //TODO remélhetőleg jó helyen
         mAdapter = new BookListAdapter(this, bookList,this);
 
 //        listView = (ListView) findViewById(R.id.history_list);
@@ -113,6 +110,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
         recyclerView.setAdapter(mAdapter);
+        registerForContextMenu(recyclerView);
 
         ItemTouchHelper.SimpleCallback itemTouchHelperCallback = new RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this);
         new ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(recyclerView);
