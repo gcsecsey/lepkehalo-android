@@ -10,4 +10,5 @@
     <!--del-->
     <dimen name="padd_10">10dp</dimen>
     <dimen name="ic_delete">30dp</dimen>
+    <dimen name="material_appbar_elevation">4dp</dimen>
 </resources>

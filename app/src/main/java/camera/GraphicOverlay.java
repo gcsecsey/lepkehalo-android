@@ -53,6 +53,7 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     private float mHeightScaleFactor = 1.0f;
     private int mFacing = CameraSource.CAMERA_FACING_BACK;
     private Set<T> mGraphics = new HashSet<>();
+    private T mFirstGraphic;
 
     /**
      * Base class for a custom graphics object to be rendered within the graphic overlay.  Subclass
@@ -130,6 +131,7 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     public void clear() {
         synchronized (mLock) {
             mGraphics.clear();
+            mFirstGraphic = null;
         }
         postInvalidate();
     }
@@ -140,6 +142,9 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     public void add(T graphic) {
         synchronized (mLock) {
             mGraphics.add(graphic);
+            if (mFirstGraphic == null) {
+                mFirstGraphic = graphic;
+            }
         }
         postInvalidate();
     }
@@ -150,6 +155,9 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     public void remove(T graphic) {
         synchronized (mLock) {
             mGraphics.remove(graphic);
+            if (mFirstGraphic != null && mFirstGraphic.equals(graphic)) {
+                mFirstGraphic = null;
+            }
         }
         postInvalidate();
     }
@@ -160,22 +168,9 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
      */
     public List<T> getGraphics() {
         synchronized (mLock) {
+            //noinspection unchecked
             return new Vector(mGraphics);
         }
-    }
-
-    /**
-     * Returns the horizontal scale factor.
-     */
-    public float getWidthScaleFactor() {
-        return mWidthScaleFactor;
-    }
-
-    /**
-     * Returns the vertical scale factor.
-     */
-    public float getHeightScaleFactor() {
-        return mHeightScaleFactor;
     }
 
     /**
@@ -208,5 +203,19 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
                 graphic.draw(canvas);
             }
         }
+    }
+
+    /**
+     * Returns the horizontal scale factor.
+     */
+    public float getWidthScaleFactor() {
+        return mWidthScaleFactor;
+    }
+
+    /**
+     * Returns the vertical scale factor.
+     */
+    public float getHeightScaleFactor() {
+        return mHeightScaleFactor;
     }
 }

@@ -24,7 +24,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,23 +34,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
-import android.widget.TextView;
+import android.view.Window;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.CommonStatusCodes;
-import camera.CameraSource;
-import camera.CameraSourcePreview;
-import camera.GraphicOverlay;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
 
 import java.io.IOException;
+
+import camera.CameraSource;
+import camera.CameraSourcePreview;
+import camera.GraphicOverlay;
 
 /**
  * Activity for the multi-tracker app.  This app detects barcodes and displays the value with the
@@ -70,16 +72,19 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     // constants used to pass extra data in the intent
     public static final String AutoFocus = "AutoFocus";
     public static final String UseFlash = "UseFlash";
+    public static final String AutoCapture = "AutoCapture";
     public static final String BarcodeObject = "Barcode";
+    public static int cameraToUse = CameraSource.CAMERA_FACING_BACK;
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
-    private TextView mTextView;
     private GraphicOverlay<BarcodeGraphic> mGraphicOverlay;
 
     // helper objects for detecting taps and pinches.
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
+
+    private boolean autoFocus, useFlash, autoCapture;
 
     /**
      * Initializes the UI and creates the detector pipeline.
@@ -87,35 +92,102 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-
-        setContentView(R.layout.barcode_capture);
+        setContentView(R.layout.activity_barcode_capture);
 
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay<BarcodeGraphic>) findViewById(R.id.graphicOverlay);
-        //TODO temporary!
-        mTextView = (TextView) findViewById(R.id.textView2);
-        mTextView.setText("Helloka");
 
         // read parameters from the intent used to launch the activity.
-        boolean autoFocus = getIntent().getBooleanExtra(AutoFocus, false);
-        boolean useFlash = getIntent().getBooleanExtra(UseFlash, false);
+        autoFocus = getIntent().getBooleanExtra(AutoFocus, true);
+        useFlash = getIntent().getBooleanExtra(UseFlash, false);
+        autoCapture = getIntent().getBooleanExtra(AutoCapture, false);
+
+        /*if(autoCapture)
+            BarcodeGraphicTracker.mBarcodeDetectorListener = this;*/
 
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
         int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (rc == PackageManager.PERMISSION_GRANTED) {
-            createCameraSource(autoFocus, useFlash);
-        } else {
+        if (rc == PackageManager.PERMISSION_GRANTED)
+            createCameraSource();
+        else
             requestCameraPermission();
-        }
 
         gestureDetector = new GestureDetector(this, new CaptureGestureListener());
         scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
+    }
 
-        //TODO remove this
-        Snackbar.make(mGraphicOverlay, "Tap to capture. Pinch/Stretch to zoom",
-                Snackbar.LENGTH_LONG)
-                .show();
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_barcodecaptureactivity, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.toggle_flash:
+                if (!useFlash) {
+                    useFlash = true;
+                    item.setIcon(R.drawable.ic_flash_off_white_24dp);
+                    mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                } else {
+                    useFlash = false;
+                    item.setIcon(R.drawable.ic_flash_on_white_24dp);
+                    mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                }
+                return true;
+            case R.id.switch_cameras:
+                if (cameraToUse == CameraSource.CAMERA_FACING_BACK) {
+                    cameraToUse = CameraSource.CAMERA_FACING_FRONT;
+                    item.setIcon(R.drawable.ic_camera_rear_white_24dp);
+                } else {
+                    cameraToUse = CameraSource.CAMERA_FACING_BACK;
+                    item.setIcon(R.drawable.ic_camera_front_white_24dp);
+                }
+                if (mPreview != null) {
+                    mPreview.release();
+                }
+                createCameraSource();
+                startCameraSource();
+                return true;
+        }
+        return false;
+    }
+
+    /**
+     * Called when the current {@link Window} of the activity gains or loses
+     * focus.  This is the best indicator of whether this activity is visible
+     * to the user.  The default implementation clears the key tracking
+     * state, so should always be called.
+     * <p>
+     * <p>Note that this provides information about global focus state, which
+     * is managed independently of activity lifecycles.  As such, while focus
+     * changes will generally have some relation to lifecycle changes (an
+     * activity that is stopped will not generally get window focus), you
+     * should not rely on any particular order between the callbacks here and
+     * those in the other lifecycle methods such as {@link #onResume}.
+     * <p>
+     * <p>As a general rule, however, a resumed activity will have window
+     * focus...  unless it has displayed other dialogs or popups that take
+     * input focus, in which case the activity itself will not have focus
+     * when the other windows have it.  Likewise, the system may display
+     * system-level windows (such as the status bar notification panel or
+     * a system alert) which will temporarily take window input focus without
+     * pausing the foreground activity.
+     *
+     * @param hasFocus Whether the window of this activity has focus.
+     * @see #hasWindowFocus()
+     * @see #onResume
+     * @see View#onWindowFocusChanged(boolean)
+     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
+            if (hasFocus) {
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
     }
 
     /**
@@ -134,20 +206,15 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             return;
         }
 
-        final AppCompatActivity thisActivity = this;
-
-        View.OnClickListener listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                ActivityCompat.requestPermissions(thisActivity, permissions,
-                        RC_HANDLE_CAMERA_PERM);
-            }
-        };
-
-        findViewById(R.id.topLayout).setOnClickListener(listener);
         Snackbar.make(mGraphicOverlay, R.string.permission_camera_rationale,
                 Snackbar.LENGTH_INDEFINITE)
-                .setAction(R.string.ok, listener)
+                .setAction(R.string.ok, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        ActivityCompat.requestPermissions(BarcodeCaptureActivity.this, permissions,
+                                RC_HANDLE_CAMERA_PERM);
+                    }
+                })
                 .show();
     }
 
@@ -169,7 +236,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
      * the constant.
      */
     @SuppressLint("InlinedApi")
-    private void createCameraSource(boolean autoFocus, boolean useFlash) {
+    private void createCameraSource() {
         Context context = getApplicationContext();
 
         // A barcode detector is created to track barcodes.  An associated multi-processor instance
@@ -177,7 +244,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // graphics for each barcode on screen.  The factory is used by the multi-processor to
         // create a separate tracker instance for each barcode.
         BarcodeDetector barcodeDetector = new BarcodeDetector.Builder(context).setBarcodeFormats(Barcode.ISBN | Barcode.PRODUCT | Barcode.EAN_13).build();
-        BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, this);
+        BarcodeTrackerFactory barcodeFactory = new BarcodeTrackerFactory(mGraphicOverlay, autoCapture ? this : null);
         barcodeDetector.setProcessor(
                 new MultiProcessor.Builder<>(barcodeFactory).build());
 
@@ -210,10 +277,14 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // Creates and starts the camera.  Note that this uses a higher resolution in comparison
         // to other detection examples to enable the barcode detector to detect small barcodes
         // at long distances.
+        @SuppressWarnings("SuspiciousNameCombination")
         CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), barcodeDetector)
-                .setFacing(CameraSource.CAMERA_FACING_BACK)
+                .setFacing(cameraToUse)
                 .setRequestedPreviewSize(metrics.widthPixels, metrics.heightPixels)
                 .setRequestedFps(30.0f);
+
+        builder = builder.setFocusMode(
+                autoFocus ? Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE : null);
 
         mCameraSource = builder
                 .setFlashMode(useFlash ? Camera.Parameters.FLASH_MODE_TORCH : null)
@@ -280,10 +351,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         if (grantResults.length != 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "Camera permission granted - initialize the camera source");
-            // we have permission, so create the camerasource
-            boolean autoFocus = true; //getIntent().getBooleanExtra(AutoFocus, false);
-            boolean useFlash = getIntent().getBooleanExtra(UseFlash, false);
-            createCameraSource(autoFocus, useFlash);
+            createCameraSource();
             return;
         }
 
@@ -330,7 +398,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     }
 
     /**
-     * onTap returns the tapped barcode result to the calling Activity.
+     * onTap is called to capture the oldest barcode currently detected and
+     * return it to the caller.
      *
      * @param rawX - the raw position of the tap
      * @param rawY - the raw position of the tap.
@@ -343,38 +412,59 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         float x = (rawX - location[0]) / mGraphicOverlay.getWidthScaleFactor();
         float y = (rawY - location[1]) / mGraphicOverlay.getHeightScaleFactor();
 
-        // Find the barcode whose center is closest to the tapped point.
-        Barcode best = null;
+        Barcode barcode = null;
         float bestDistance = Float.MAX_VALUE;
+
         for (BarcodeGraphic graphic : mGraphicOverlay.getGraphics()) {
-            Barcode barcode = graphic.getBarcode();
-            if (barcode.getBoundingBox().contains((int) x, (int) y)) {
-                // Exact hit, no need to keep looking.
-                best = barcode;
-                break;
-            }
-            float dx = x - barcode.getBoundingBox().centerX();
-            float dy = y - barcode.getBoundingBox().centerY();
-            float distance = (dx * dx) + (dy * dy);  // actually squared distance
-            if (distance < bestDistance) {
-                best = barcode;
-                bestDistance = distance;
+            Barcode barcode_graphic = graphic.getBarcode();
+            if (barcode_graphic != null) {
+                if (barcode_graphic.getBoundingBox().contains((int) x, (int) y)) {
+                    // Exact hit, no need to keep looking.
+                    barcode = barcode_graphic;
+                    break;
+                }
+                float dx = x - barcode_graphic.getBoundingBox().centerX();
+                float dy = y - barcode_graphic.getBoundingBox().centerY();
+                float distance = (dx * dx) + (dy * dy);  // actually squared distance
+                if (distance < bestDistance) {
+                    barcode = barcode_graphic;
+                    bestDistance = distance;
+                }
             }
         }
 
-        if (best != null) {
+        if (barcode != null) {
             Intent data = new Intent();
-            data.putExtra(BarcodeObject, best);
+            data.putExtra(BarcodeObject, barcode);
             setResult(CommonStatusCodes.SUCCESS, data);
             finish();
-            return true;
-        }
-        return false;
+        } else
+            Log.d(TAG, "no barcode detected");
+        return barcode != null;
+    }
+
+    /**
+     * Multiple events can be fired depending the number of barcodes identified,
+     * So you may want to build a Map<K,V> to add the detected objects and finish the
+     * activity when the user is satisfied. @see {@link java.util.Map}
+     * <br/>
+     *
+     * @param data Barcode parsed object will contain different kinds of data depending
+     *             on the scanned barcode content.
+     */
+    @Override
+    public void onBarcodeDetected(Barcode data) {
+        Intent mIntent = new Intent();
+        mIntent.putExtra(BarcodeObject, data);
+        setResult(CommonStatusCodes.SUCCESS, mIntent);
+        finish();
     }
 
     private class CaptureGestureListener extends GestureDetector.SimpleOnGestureListener {
+
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
+
             return onTap(e.getRawX(), e.getRawY()) || super.onSingleTapConfirmed(e);
         }
     }
@@ -431,13 +521,5 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         public void onScaleEnd(ScaleGestureDetector detector) {
             mCameraSource.doZoom(detector.getScaleFactor());
         }
-    }
-
-    @Override
-    public void onBarcodeDetected(Barcode barcode) {
-        Intent data = new Intent();
-        data.putExtra(BarcodeObject, barcode);
-        setResult(CommonStatusCodes.SUCCESS, data);
-        finish();
     }
 }

@@ -35,7 +35,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -61,7 +62,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements RecyclerItemTouchHelper.RecyclerItemTouchHelperListener {
 
     // use a compound button so either checkbox or switch widgets work.
-    private TextView historyHeader;
+    private LinearLayout bookListPlaceholder;
 
     //list
     private RecyclerView recyclerView;
@@ -83,8 +84,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        //TODO remove
-        historyHeader = (TextView) findViewById(R.id.history);
+        bookListPlaceholder = (LinearLayout) findViewById(R.id.empty_booklist_placeholder);
 
         //read preferences
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -114,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
 
         ItemTouchHelper.SimpleCallback itemTouchHelperCallback = new RecyclerItemTouchHelper(0, ItemTouchHelper.LEFT, this);
         new ItemTouchHelper(itemTouchHelperCallback).attachToRecyclerView(recyclerView);
+
+        updateRecyclerPlaceholder();
     }
 
     @Override
@@ -132,11 +134,23 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         return false;
     }
 
+    public void updateRecyclerPlaceholder() {
+        //If the list is empty, show an alternative view
+        if (bookList.isEmpty()) {
+            recyclerView.setVisibility(View.GONE);
+            bookListPlaceholder.setVisibility(View.VISIBLE);
+        }
+        else {
+            recyclerView.setVisibility(View.VISIBLE);
+            bookListPlaceholder.setVisibility(View.GONE);
+        }
+    }
+
     public void startScan() {
         Intent intent = new Intent(this, BarcodeCaptureActivity.class);
         intent.putExtra(BarcodeCaptureActivity.AutoFocus, true);
 //        intent.putExtra(BarcodeCaptureActivity.UseFlash, useFlash.isChecked());
-
+        intent.putExtra(BarcodeCaptureActivity.AutoCapture, true);
         startActivityForResult(intent, RC_BARCODE_CAPTURE);
     }
 
@@ -168,16 +182,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
             if (resultCode == CommonStatusCodes.SUCCESS) {
                 if (data != null) {
                     Barcode barcode = data.getParcelableExtra(BarcodeCaptureActivity.BarcodeObject);
-                    //TODO remove
-                    historyHeader.setText(R.string.barcode_success);
                     sendISBNrequest(barcode.displayValue);
                     Log.d(TAG, "Barcode read: " + barcode.displayValue);
                 } else {
-                    historyHeader.setText(R.string.barcode_failure);
                     Log.d(TAG, "No barcode captured, intent data is null");
                 }
             } else {
-                historyHeader.setText(String.format(getString(R.string.barcode_error),
+                Log.d(TAG, String.format(getString(R.string.barcode_error),
                         CommonStatusCodes.getStatusCodeString(resultCode)));
             }
         } else {
@@ -220,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
 
                 //TODO Not very elegant, change later
                 if (error.getMessage().contains("JSONException")) {
-                    Snackbar.make(historyHeader, getString(R.string.book_not_found),
+                    Snackbar.make(bookListPlaceholder, getString(R.string.book_not_found),
                             Snackbar.LENGTH_INDEFINITE)
                             .setAction(getString(R.string.dismiss), new View.OnClickListener() {
                                 @Override
@@ -229,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
                             })
                             .show();
                 } else {
-                    Snackbar.make(historyHeader, getString(R.string.network_error),
+                    Snackbar.make(bookListPlaceholder, getString(R.string.network_error),
                             Snackbar.LENGTH_INDEFINITE)
                             .setAction(getString(R.string.dismiss), new View.OnClickListener() {
                                 @Override
@@ -261,15 +272,26 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
             mAdapter.removeItem(viewHolder.getAdapterPosition());
 
             // showing snack bar with Undo option
-            Snackbar.make(historyHeader, title + " törölve",
+            Snackbar.make(bookListPlaceholder, title + " törölve",
                     Snackbar.LENGTH_LONG)
                     .setAction(getString(R.string.undo), new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             mAdapter.restoreItem(deletedItem, deletedIndex);
+                            //TODO refactor this to a dataclass
+                            //save the list to data storage
+                            String json = gson.toJson(bookList);
+                            prefs.edit().putString(STORAGE_KEY, json).apply();
+                            updateRecyclerPlaceholder();
                         }
                     })
                     .show();
+
+            //TODO refactor this to a dataclass
+            //save the list to data storage
+            String json = gson.toJson(bookList);
+            prefs.edit().putString(STORAGE_KEY, json).apply();
+            updateRecyclerPlaceholder();
         }
     }
 
@@ -298,6 +320,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
                bookList.add(0, b);
             }
             mAdapter.notifyDataSetChanged();
+            updateRecyclerPlaceholder();
         } catch (JSONException e) {
         }
 
