@@ -3,12 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/switch_cameras"
-        android:icon="@drawable/ic_camera_front_white_24dp"
-        android:title="@string/switch_camera"
-        app:showAsAction="always" />
-
-    <item
         android:id="@+id/toggle_flash"
         android:icon="@drawable/ic_flash_on_white_24dp"
         android:title="@string/toggle_flash"

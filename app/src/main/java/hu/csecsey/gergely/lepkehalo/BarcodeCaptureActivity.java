@@ -74,7 +74,6 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
     public static final String UseFlash = "UseFlash";
     public static final String AutoCapture = "AutoCapture";
     public static final String BarcodeObject = "Barcode";
-    public static int cameraToUse = CameraSource.CAMERA_FACING_BACK;
 
     private CameraSource mCameraSource;
     private CameraSourcePreview mPreview;
@@ -136,20 +135,6 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
                     item.setIcon(R.drawable.ic_flash_on_white_24dp);
                     mCameraSource.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
                 }
-                return true;
-            case R.id.switch_cameras:
-                if (cameraToUse == CameraSource.CAMERA_FACING_BACK) {
-                    cameraToUse = CameraSource.CAMERA_FACING_FRONT;
-                    item.setIcon(R.drawable.ic_camera_rear_white_24dp);
-                } else {
-                    cameraToUse = CameraSource.CAMERA_FACING_BACK;
-                    item.setIcon(R.drawable.ic_camera_front_white_24dp);
-                }
-                if (mPreview != null) {
-                    mPreview.release();
-                }
-                createCameraSource();
-                startCameraSource();
                 return true;
         }
         return false;
@@ -279,7 +264,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
         // at long distances.
         @SuppressWarnings("SuspiciousNameCombination")
         CameraSource.Builder builder = new CameraSource.Builder(getApplicationContext(), barcodeDetector)
-                .setFacing(cameraToUse)
+                .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedPreviewSize(metrics.widthPixels, metrics.heightPixels)
                 .setRequestedFps(30.0f);
 
