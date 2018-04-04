@@ -24,7 +24,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.customtabs.CustomTabsIntent;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
@@ -37,6 +39,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -61,13 +64,15 @@ import java.util.List;
  */
 public class MainActivity extends AppCompatActivity implements RecyclerItemTouchHelper.RecyclerItemTouchHelperListener {
 
-    // use a compound button so either checkbox or switch widgets work.
-    private LinearLayout bookListPlaceholder;
+    //Placeholder elements
+    private ImageView noBooksImage;
+    private TextView noBooksText;
 
     //list
     private RecyclerView recyclerView;
     private BookListAdapter mAdapter;
     private List<Book> bookList = new ArrayList<>();
+    private FloatingActionButton scanFab;
 
     private String konyvID = "";
     private static final int RC_BARCODE_CAPTURE = 9001;
@@ -84,7 +89,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        bookListPlaceholder = (LinearLayout) findViewById(R.id.empty_booklist_placeholder);
+        noBooksImage = (ImageView) findViewById(R.id.no_books_image);
+        noBooksText = (TextView) findViewById(R.id.no_books_text);
+        scanFab = (FloatingActionButton) findViewById(R.id.main_scan_fab);
+
+        scanFab.setOnClickListener((View v) -> {
+            startScan();
+        });
 
         //read preferences
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
@@ -120,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_mainactivity, menu);
+        //getMenuInflater().inflate(R.menu.menu_mainactivity, menu);
         return true;
     }
 
@@ -138,11 +149,13 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         //If the list is empty, show an alternative view
         if (bookList.isEmpty()) {
             recyclerView.setVisibility(View.GONE);
-            bookListPlaceholder.setVisibility(View.VISIBLE);
+            noBooksImage.setVisibility(View.VISIBLE);
+            noBooksText.setVisibility(View.VISIBLE);
         }
         else {
             recyclerView.setVisibility(View.VISIBLE);
-            bookListPlaceholder.setVisibility(View.GONE);
+            noBooksImage.setVisibility(View.GONE);
+            noBooksText.setVisibility(View.GONE);
         }
     }
 
@@ -231,22 +244,22 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
 
                 //TODO Not very elegant, change later
                 if (error.getMessage().contains("JSONException")) {
-                    Snackbar.make(bookListPlaceholder, getString(R.string.book_not_found),
+                    Snackbar.make(recyclerView, getString(R.string.book_not_found),
                             Snackbar.LENGTH_INDEFINITE)
                             .setAction(getString(R.string.dismiss), new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                 }
-                            })
+                            }).setActionTextColor(ContextCompat.getColor(getApplicationContext(), R.color.primaryLightColor))
                             .show();
                 } else {
-                    Snackbar.make(bookListPlaceholder, getString(R.string.network_error),
+                    Snackbar.make(recyclerView, getString(R.string.network_error),
                             Snackbar.LENGTH_INDEFINITE)
                             .setAction(getString(R.string.dismiss), new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                 }
-                            })
+                            }).setActionTextColor(ContextCompat.getColor(getApplicationContext(), R.color.primaryLightColor))
                             .show();
                 }
             }
@@ -272,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
             mAdapter.removeItem(viewHolder.getAdapterPosition());
 
             // showing snack bar with Undo option
-            Snackbar.make(bookListPlaceholder, title + " törölve",
+            Snackbar.make(recyclerView, title + " törölve",
                     Snackbar.LENGTH_LONG)
                     .setAction(getString(R.string.undo), new View.OnClickListener() {
                         @Override
@@ -284,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
                             prefs.edit().putString(STORAGE_KEY, json).apply();
                             updateRecyclerPlaceholder();
                         }
-                    })
+                    }).setActionTextColor(ContextCompat.getColor(getApplicationContext(), R.color.primaryLightColor))
                     .show();
 
             //TODO refactor this to a dataclass

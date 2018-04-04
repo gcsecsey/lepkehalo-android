@@ -30,6 +30,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -199,7 +200,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
                         ActivityCompat.requestPermissions(BarcodeCaptureActivity.this, permissions,
                                 RC_HANDLE_CAMERA_PERM);
                     }
-                })
+                }).setActionTextColor(ContextCompat.getColor(this, R.color.primaryLightColor))
                 .show();
     }
 

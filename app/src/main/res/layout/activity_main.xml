@@ -1,43 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <!--<android.support.v7.widget.Toolbar-->
-    <!--android:id="@+id/toolbar_mainactivity"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="?attr/actionBarSize"-->
-    <!--android:background="?attr/colorPrimary"-->
-    <!--android:elevation="@dimen/material_appbar_elevation"-->
-    <!--android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"-->
-    <!--app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />-->
 
-    <LinearLayout
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/main_lists_wrapper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/empty_booklist_placeholder"
-        android:orientation="vertical"
-        android:gravity="center_horizontal">
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        >
+
+        <!--The list view-->
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+
         <ImageView
+            android:id="@+id/no_books_image"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:adjustViewBounds="true"
-            android:src="@drawable/ic_photo_camera_white_24dp" />
+            android:layout_marginEnd="32dp"
+            android:layout_marginLeft="32dp"
+            android:layout_marginRight="32dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="32dp"
+            android:contentDescription="@string/no_book_scanned"
+            android:scaleType="center"
+            android:visibility="gone"
+            app:layout_constraintBottom_toTopOf="@id/no_books_text"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.3"
+            app:layout_constraintVertical_chainStyle="packed"
+            app:srcCompat="@drawable/ic_photo_camera_white_24dp"/>
+
         <TextView
-            android:layout_width="match_parent"
+            android:id="@+id/no_books_text"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:adjustViewBounds="true"
+            android:layout_marginBottom="32dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginLeft="32dp"
+            android:layout_marginRight="32dp"
+            android:layout_marginStart="32dp"
+            android:gravity="center"
+            android:textColor="@color/colorLightText"
+            android:textSize="18sp"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/no_books_image"
             android:text="@string/no_book_scanned"
             />
-    </LinearLayout>
+    </android.support.constraint.ConstraintLayout>
 
-
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:layout_width="match_parent"
+    <!--The FAB-->
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/main_scan_fab"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:scrollbars="vertical" />
+        android:clickable="true"
+        android:focusable="true"
+        app:srcCompat="@drawable/ic_barcode_scan"
+        app:elevation="6dp"
+        app:fabSize="normal"
+        app:rippleColor="@color/primaryDarkColor"
+        app:useCompatPadding="true"
+        app:layout_anchor="@id/main_lists_wrapper"
+        app:layout_anchorGravity="bottom|right|end"
+        app:layout_behavior="hu.csecsey.gergely.lepkehalo.DodgeFabBehavior"
+        />
 
-</LinearLayout>
+</android.support.design.widget.CoordinatorLayout>
