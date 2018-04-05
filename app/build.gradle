@@ -8,8 +8,8 @@ android {
     defaultConfig {
         applicationId "hu.csecsey.gergely.lepkehalo"
         targetSdkVersion 26
-        versionCode 1
-        versionName "1.0"
+        versionCode 2
+        versionName "0.2"
         minSdkVersion 15
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

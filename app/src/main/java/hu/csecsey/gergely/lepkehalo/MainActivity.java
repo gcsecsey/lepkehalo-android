@@ -18,6 +18,7 @@
 package hu.csecsey.gergely.lepkehalo;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -81,6 +82,8 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
     private static final String API_KEY = "08b9582cd4212eb22d52e9ba4964bfae";
     private static final String STORAGE_KEY = "lepkehalo.list.state";
 
+    public static Context context;
+
     //handle data storage
     Gson gson = new Gson();
     SharedPreferences prefs;
@@ -88,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        context = getApplicationContext();
         setContentView(R.layout.activity_main);
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         noBooksImage = (ImageView) findViewById(R.id.no_books_image);
@@ -111,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         }
         Log.d(TAG, bookList.toString());
 
-        mAdapter = new BookListAdapter(this, bookList,this);
+        mAdapter = new BookListAdapter(context, bookList, this);
 
 //        listView = (ListView) findViewById(R.id.history_list);
 //        adapter = new CustomListAdapter(this, bookList);
@@ -120,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
         recyclerView.setLayoutManager(mLayoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
+        recyclerView.addItemDecoration(new DividerItemDecoration(context, DividerItemDecoration.VERTICAL));
         recyclerView.setAdapter(mAdapter);
         registerForContextMenu(recyclerView);
 
@@ -357,5 +361,4 @@ public class MainActivity extends AppCompatActivity implements RecyclerItemTouch
         }
         return -1;
     }
-
 }
