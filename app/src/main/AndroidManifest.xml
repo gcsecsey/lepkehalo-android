@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="hu.csecsey.gergely.lepkehalo" android:installLocation="auto">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="hu.csecsey.gergely.lepkehalo"
+    android:installLocation="auto">
 
     <uses-feature android:name="android.hardware.camera" />
 
@@ -16,6 +18,7 @@
         android:supportsRtl="true"
         android:hardwareAccelerated="true"
         android:theme="@style/AppTheme"
+        tools:replace="android:appComponentFactory"
         >
 
         <meta-data
