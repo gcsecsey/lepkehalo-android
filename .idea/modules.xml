@@ -2,10 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/GIT-lepkehalo.iml" filepath="$PROJECT_DIR$/GIT-lepkehalo.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://$PROJECT_DIR$/lepkehalo.iml" filepath="$PROJECT_DIR$/lepkehalo.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/lepkehalo-app.iml" filepath="$PROJECT_DIR$/app/lepkehalo-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lepkehalo-android.iml" filepath="$PROJECT_DIR$/.idea/modules/lepkehalo-android.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.androidTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.unitTest.iml" />
     </modules>
   </component>
 </project>
