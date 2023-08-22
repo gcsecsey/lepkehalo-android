@@ -7,6 +7,8 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.androidTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.androidTest.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.main.iml" filepath="$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.unitTest.iml" filepath="$PROJECT_DIR$/.idea/modules/app/lepkehalo-android.app.unitTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lepkehalo-android.main.iml" filepath="$PROJECT_DIR$/.idea/modules/lepkehalo-android.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/lepkehalo-android.test.iml" filepath="$PROJECT_DIR$/.idea/modules/lepkehalo-android.test.iml" />
     </modules>
   </component>
 </project>
