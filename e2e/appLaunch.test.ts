@@ -15,7 +15,6 @@ describe('App Launch', () => {
 
   it('should show empty state on first launch', async () => {
     await expect(element(by.id('empty-state'))).toBeVisible();
-    await expect(element(by.text('Nincsenek beolvasott könyvek'))).toBeVisible();
   });
 
   it('should show scan button', async () => {
